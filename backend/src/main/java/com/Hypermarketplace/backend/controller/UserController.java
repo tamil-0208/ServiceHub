@@ -3,6 +3,7 @@ package com.Hypermarketplace.backend.controller;
 import com.Hypermarketplace.backend.dto.UserRequest;
 import com.Hypermarketplace.backend.dto.UserResponse;
 import com.Hypermarketplace.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> registerUser(
-            @RequestBody UserRequest request) {
+            @Valid @RequestBody UserRequest request) {
 
         UserResponse response = userService.createUser(request);
 

@@ -2,30 +2,17 @@ package com.Hypermarketplace.backend.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
-public class UserRequest {
-
-    @NotBlank(message = "Name is required")
-    private String name;
+public class LoginRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Enter a valid email")
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, message = "Password must contain at least 6 characters")
     private String password;
 
-    public UserRequest() {
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+    public LoginRequest() {
     }
 
     public String getEmail() {

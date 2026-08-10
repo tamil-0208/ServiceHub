@@ -21,23 +21,28 @@ public class UserService {
 
     public UserResponse createUser(UserRequest request) {
 
-        String encodedPassword =
-                passwordEncoder.encode(request.getPassword());
-
-        User user = new User(
-                request.getName(),
-                request.getEmail(),
-                encodedPassword,
-                request.getRole()
-        );
-
-        User savedUser = userRepository.save(user);
-
-        return new UserResponse(
-                savedUser.getId(),
-                savedUser.getName(),
-                savedUser.getEmail(),
-                savedUser.getRole()
-        );
+    if (userRepository.existsByEmail(request.getEmail())) {
+        throw new RuntimeException("Email already registered");
     }
+
+    String encodedPassword =
+            passwordEncoder.encode(request.getPassword());
+
+    User user = new User(
+            request.getName(),
+            request.getEmail(),
+            encodedPassword,
+            "CUSTOMER"
+    );
+
+    User savedUser = userRepository.save(user);
+
+    return new UserResponse(
+            savedUser.getId(),
+            savedUser.getName(),
+            savedUser.getEmail(),
+            savedUser.getRole()
+    );
+}
+
 }
