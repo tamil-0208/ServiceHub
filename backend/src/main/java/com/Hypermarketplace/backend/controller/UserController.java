@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/users")
@@ -25,5 +26,15 @@ public class UserController {
         UserResponse response = userService.createUser(request);
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
+    @GetMapping("/profile")
+    public ResponseEntity<UserResponse> getProfile(
+            Authentication authentication) {
+
+        String userId = authentication.getName();
+
+        UserResponse response = userService.getUserById(userId);
+
+        return ResponseEntity.ok(response);
     }
 }
