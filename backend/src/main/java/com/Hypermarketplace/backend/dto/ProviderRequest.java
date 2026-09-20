@@ -1,6 +1,7 @@
 package com.Hypermarketplace.backend.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 public class ProviderRequest {
 
@@ -9,6 +10,8 @@ public class ProviderRequest {
 
     private String description;
 
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[+]?[0-9]{10,15}$", message = "Phone number must be 10-15 digits, optionally starting with +")
     private String phone;
 
     private String experience;

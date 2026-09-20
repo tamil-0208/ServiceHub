@@ -2,6 +2,8 @@ package com.Hypermarketplace.backend.service;
 
 import com.Hypermarketplace.backend.dto.ProviderRequest;
 import com.Hypermarketplace.backend.dto.ProviderResponse;
+import com.Hypermarketplace.backend.exception.ConflictException;
+import com.Hypermarketplace.backend.exception.ResourceNotFoundException;
 import com.Hypermarketplace.backend.model.Provider;
 import com.Hypermarketplace.backend.repository.ProviderRepository;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class ProviderService {
             ProviderRequest request) {
 
         if (providerRepository.existsByUserId(userId)) {
-            throw new RuntimeException("Provider profile already exists");
+            throw new ConflictException("Provider profile already exists for this user");
         }
 
         Provider provider = new Provider();
@@ -45,7 +47,7 @@ public class ProviderService {
         Provider provider = providerRepository
                 .findByUserId(userId)
                 .orElseThrow(() ->
-                        new RuntimeException("Provider profile not found"));
+                        new ResourceNotFoundException("Provider profile not found for this user"));
 
         return new ProviderResponse(provider);
     }
