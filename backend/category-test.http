@@ -1,0 +1,154 @@
+### Category Module Manual Test
+### Usage: Copy these curl commands to your terminal, or use a REST client like Postman/Insomnia
+### Make sure the backend is running on http://localhost:8080
+
+# 1. Register an admin user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Admin User",
+    "email": "admin@test.com",
+    "password": "Admin123",
+    "role": "ADMIN"
+  }'
+
+# 2. Login as admin to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@test.com",
+    "password": "Admin123"
+  }'
+
+# Save the token from the response above and use it in the following commands
+# Replace YOUR_ADMIN_JWT_TOKEN_HERE with the actual token from the login response
+
+# 3. Create a category (ADMIN only - should succeed with 201)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Electrical",
+    "description": "Electrical services and repairs",
+    "iconUrl": "https://example.com/icons/electrical.png"
+  }'
+
+# 4. Create another category (ADMIN only - should succeed with 201)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Plumbing",
+    "description": "Plumbing services and repairs",
+    "iconUrl": "https://example.com/icons/plumbing.png"
+  }'
+
+# 5. Try to create duplicate category (should fail with 409 Conflict)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "electrical",
+    "description": "This should fail - case insensitive duplicate"
+  }'
+
+# 6. Get all categories (PUBLIC - should succeed without authentication)
+curl -X GET http://localhost:8080/api/categories
+
+# 7. Get specific category by ID (PUBLIC - should succeed without authentication)
+# Replace CATEGORY_ID_HERE with actual ID from step 3 or 4
+curl -X GET http://localhost:8080/api/categories/CATEGORY_ID_HERE
+
+# 8. Update a category (ADMIN only - should succeed with 200)
+# Replace CATEGORY_ID_HERE with actual ID from step 3 or 4
+curl -X PUT http://localhost:8080/api/categories/CATEGORY_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Electrical Services",
+    "description": "Updated description for electrical services",
+    "iconUrl": "https://example.com/icons/electrical-updated.png"
+  }'
+
+# 9. Try to update category with duplicate name (should fail with 409 Conflict)
+# Replace CATEGORY_ID_HERE with actual ID from step 3 or 4
+curl -X PUT http://localhost:8080/api/categories/CATEGORY_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Plumbing",
+    "description": "This should fail - duplicate name"
+  }'
+
+# 10. Soft-delete a category (ADMIN only - should succeed with 200)
+# Replace CATEGORY_ID_HERE with actual ID from step 3 or 4
+curl -X DELETE http://localhost:8080/api/categories/CATEGORY_ID_HERE \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE"
+
+# 11. Try to get deleted category (should fail with 404 Not Found)
+# Replace CATEGORY_ID_HERE with the deleted category ID
+curl -X GET http://localhost:8080/api/categories/CATEGORY_ID_HERE
+
+# 12. Get all categories again (should not include deleted category)
+curl -X GET http://localhost:8080/api/categories
+
+# 13. Try to create category without authentication (should fail with 401)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Unauthorized Category",
+    "description": "This should fail"
+  }'
+
+# 14. Try to update category without authentication (should fail with 401)
+# Replace CATEGORY_ID_HERE with actual ID
+curl -X PUT http://localhost:8080/api/categories/CATEGORY_ID_HERE \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Unauthorized Update",
+    "description": "This should fail"
+  }'
+
+# 15. Try to delete category without authentication (should fail with 401)
+# Replace CATEGORY_ID_HERE with actual ID
+curl -X DELETE http://localhost:8080/api/categories/CATEGORY_ID_HERE
+
+# 16. Test validation - missing name (should fail with 400 Bad Request)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "description": "Missing name"
+  }'
+
+# 17. Test validation - empty name (should fail with 400 Bad Request)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "",
+    "description": "Empty name"
+  }'
+
+# 18. Create category with minimal valid data (should succeed with 201)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Cleaning"
+  }'
+
+# 19. Get non-existent category (should fail with 404 Not Found)
+curl -X GET http://localhost:8080/api/categories/507f1f77bcf86cd799439011
+
+# 20. Update non-existent category (should fail with 404 Not Found)
+curl -X PUT http://localhost:8080/api/categories/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Updated Name"
+  }'
+
+# 21. Delete non-existent category (should fail with 404 Not Found)
+curl -X DELETE http://localhost:8080/api/categories/507f1f77bcf86cd799439011 \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE"
