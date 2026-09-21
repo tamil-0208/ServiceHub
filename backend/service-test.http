@@ -1,0 +1,356 @@
+### Service Module Manual Test
+### Usage: Copy these curl commands to your terminal, or use a REST client like Postman/Insomnia
+### Make sure the backend is running on http://localhost:8080
+
+# ============================================
+# SETUP: Create categories and providers first
+# ============================================
+
+# 1. Register an admin user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Admin User",
+    "email": "admin@test.com",
+    "password": "Admin123",
+    "role": "ADMIN"
+  }'
+
+# 2. Login as admin to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@test.com",
+    "password": "Admin123"
+  }'
+
+# Save the admin token from the response above
+# Replace YOUR_ADMIN_JWT_TOKEN_HERE with the actual token
+
+# 3. Create a category (ADMIN only)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Electrical",
+    "description": "Electrical services and repairs"
+  }'
+
+# 4. Create another category (ADMIN only)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Plumbing",
+    "description": "Plumbing services and repairs"
+  }'
+
+# Save the category IDs from the responses above
+# Replace ELECTRICAL_CATEGORY_ID_HERE and PLUMBING_CATEGORY_ID_HERE with actual IDs
+
+# 5. Register Provider A
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Provider A",
+    "email": "providerA@test.com",
+    "password": "Provider123",
+    "role": "PROVIDER"
+  }'
+
+# 6. Register Provider B
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Provider B",
+    "email": "providerB@test.com",
+    "password": "Provider123",
+    "role": "PROVIDER"
+  }'
+
+# 7. Login as Provider A
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "providerA@test.com",
+    "password": "Provider123"
+  }'
+
+# Save Provider A's token
+# Replace PROVIDER_A_JWT_TOKEN_HERE with the actual token
+
+# 8. Login as Provider B
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "providerB@test.com",
+    "password": "Provider123"
+  }'
+
+# Save Provider B's token
+# Replace PROVIDER_B_JWT_TOKEN_HERE with the actual token
+
+# 9. Create Provider A's profile
+curl -X POST http://localhost:8080/api/providers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "businessName": "Arun Electrical Services",
+    "description": "Expert electrical services",
+    "phone": "1234567890",
+    "experience": "10 years",
+    "address": "123 Electric Street"
+  }'
+
+# 10. Create Provider B's profile
+curl -X POST http://localhost:8080/api/providers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_B_JWT_TOKEN_HERE" \
+  -d '{
+    "businessName": "B Plumbing Services",
+    "description": "Expert plumbing services",
+    "phone": "9876543210",
+    "experience": "8 years",
+    "address": "456 Plumbing Avenue"
+  }'
+
+# Save the provider IDs from the responses above
+# Replace PROVIDER_A_ID_HERE and PROVIDER_B_ID_HERE with actual IDs
+
+# ============================================
+# SERVICE MODULE TESTS
+# ============================================
+
+# 11. Create a service for Provider A (should succeed with 201)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Fan Installation",
+    "description": "Professional fan installation service",
+    "price": 500.00,
+    "durationMinutes": 60,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 12. Create another service for Provider A (should succeed with 201)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Switch Repair",
+    "description": "Electrical switch repair service",
+    "price": 200.00,
+    "durationMinutes": 30,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 13. Create a service for Provider B (should succeed with 201)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_B_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Pipe Repair",
+    "description": "Professional pipe repair service",
+    "price": 450.00,
+    "durationMinutes": 45,
+    "categoryId": "PLUMBING_CATEGORY_ID_HERE"
+  }'
+
+# Save the service IDs from the responses above
+# Replace SERVICE_A_ID_HERE, SERVICE_A2_ID_HERE, SERVICE_B_ID_HERE with actual IDs
+
+# 14. Get all services (PUBLIC - should succeed without authentication)
+curl -X GET http://localhost:8080/api/services
+
+# 15. Get services by category (PUBLIC - should succeed)
+curl -X GET "http://localhost:8080/api/services?categoryId=ELECTRICAL_CATEGORY_ID_HERE"
+
+# 16. Get services by provider (PUBLIC - should succeed)
+curl -X GET "http://localhost:8080/api/services?providerId=PROVIDER_A_ID_HERE"
+
+# 17. Get services by both category and provider (PUBLIC - should succeed)
+curl -X GET "http://localhost:8080/api/services?categoryId=ELECTRICAL_CATEGORY_ID_HERE&providerId=PROVIDER_A_ID_HERE"
+
+# 18. Get specific service by ID (PUBLIC - should succeed)
+curl -X GET http://localhost:8080/api/services/SERVICE_A_ID_HERE
+
+# 19. Get Provider A's services via provider endpoint (PUBLIC - should succeed)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_A_ID_HERE/services
+
+# 20. Get Provider B's services via provider endpoint (PUBLIC - should succeed)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_B_ID_HERE/services
+
+# 21. Update Provider A's service (should succeed with 200)
+curl -X PUT http://localhost:8080/api/services/SERVICE_A_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Fan Installation (Updated)",
+    "description": "Professional fan installation with warranty",
+    "price": 550.00,
+    "durationMinutes": 60,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 22. Try to update Provider A's service as Provider B (OWNERSHIP TEST - should fail with 404)
+curl -X PUT http://localhost:8080/api/services/SERVICE_A_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_B_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Unauthorized Update",
+    "description": "This should fail",
+    "price": 100.00,
+    "durationMinutes": 30,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 23. Soft-delete Provider A's service (should succeed with 200)
+curl -X DELETE http://localhost:8080/api/services/SERVICE_A_ID_HERE \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE"
+
+# 24. Try to delete Provider A's service as Provider B (OWNERSHIP TEST - should fail with 404)
+curl -X DELETE http://localhost:8080/api/services/SERVICE_A2_ID_HERE \
+  -H "Authorization: Bearer PROVIDER_B_JWT_TOKEN_HERE"
+
+# 25. Try to get deleted service (should fail with 404)
+curl -X GET http://localhost:8080/api/services/SERVICE_A_ID_HERE
+
+# 26. Get all services again (should not include deleted service)
+curl -X GET http://localhost:8080/api/services
+
+# 27. Try to create service without provider profile (should fail with 404)
+# First register a user without provider profile
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "No Profile User",
+    "email": "noprofile@test.com",
+    "password": "NoProfile123",
+    "role": "PROVIDER"
+  }'
+
+# Login as no-profile user
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "noprofile@test.com",
+    "password": "NoProfile123"
+  }'
+
+# Replace NO_PROFILE_JWT_TOKEN_HERE with the actual token
+# Try to create service (should fail with 404)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer NO_PROFILE_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Service Without Profile",
+    "description": "This should fail",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 28. Try to create service with non-existent category (should fail with 404)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Service with Bad Category",
+    "description": "This should fail",
+    "price": 100.00,
+    "categoryId": "507f1f77bcf86cd799439011"
+  }'
+
+# 29. Try to create service with invalid price (should fail with 400)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Service with Invalid Price",
+    "description": "This should fail",
+    "price": 0.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 30. Try to create service with negative price (should fail with 400)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Service with Negative Price",
+    "description": "This should fail",
+    "price": -50.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 31. Try to create service without title (should fail with 400)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "description": "Missing title",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 32. Try to create service without categoryId (should fail with 400)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Service Without Category",
+    "description": "This should fail",
+    "price": 100.00
+  }'
+
+# 33. Try to create service without authentication (should fail with 401)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Unauthorized Service",
+    "description": "This should fail",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 34. Try to update service without authentication (should fail with 401)
+curl -X PUT http://localhost:8080/api/services/SERVICE_A2_ID_HERE \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Unauthorized Update",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 35. Try to delete service without authentication (should fail with 401)
+curl -X DELETE http://localhost:8080/api/services/SERVICE_A2_ID_HERE
+
+# 36. Create service with minimal valid data (should succeed with 201)
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Minimal Service",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 37. Get non-existent service (should fail with 404)
+curl -X GET http://localhost:8080/api/services/507f1f77bcf86cd799439011
+
+# 38. Update non-existent service (should fail with 404)
+curl -X PUT http://localhost:8080/api/services/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Update Non-existent",
+    "price": 100.00,
+    "categoryId": "ELECTRICAL_CATEGORY_ID_HERE"
+  }'
+
+# 39. Delete non-existent service (should fail with 404)
+curl -X DELETE http://localhost:8080/api/services/507f1f77bcf86cd799439011 \
+  -H "Authorization: Bearer PROVIDER_A_JWT_TOKEN_HERE"
+
+# 40. Get services for non-existent provider (should return empty list)
+curl -X GET http://localhost:8080/api/providers/507f1f77bcf86cd799439011/services
