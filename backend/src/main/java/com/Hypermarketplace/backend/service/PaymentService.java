@@ -7,6 +7,7 @@ import com.Hypermarketplace.backend.exception.ConflictException;
 import com.Hypermarketplace.backend.exception.ResourceNotFoundException;
 import com.Hypermarketplace.backend.model.Booking;
 import com.Hypermarketplace.backend.model.BookingStatusEnum;
+import com.Hypermarketplace.backend.model.NotificationTypeEnum;
 import com.Hypermarketplace.backend.model.Payment;
 import com.Hypermarketplace.backend.model.PaymentMethod;
 import com.Hypermarketplace.backend.model.PaymentStatusEnum;
@@ -28,17 +29,23 @@ public class PaymentService {
     private final ProviderRepository providerRepository;
     private final PaymentConfig paymentConfig;
     private final PaymentGateway paymentGateway;
+    private final NotificationService notificationService;
+    private final InvoiceService invoiceService;
 
     public PaymentService(PaymentRepository paymentRepository,
                           BookingRepository bookingRepository,
                           ProviderRepository providerRepository,
                           PaymentConfig paymentConfig,
-                          PaymentGateway paymentGateway) {
+                          PaymentGateway paymentGateway,
+                          NotificationService notificationService,
+                          InvoiceService invoiceService) {
         this.paymentRepository = paymentRepository;
         this.bookingRepository = bookingRepository;
         this.providerRepository = providerRepository;
         this.paymentConfig = paymentConfig;
         this.paymentGateway = paymentGateway;
+        this.notificationService = notificationService;
+        this.invoiceService = invoiceService;
     }
 
     public PaymentResponse initiatePayment(String customerId, String bookingId) {
@@ -77,6 +84,21 @@ public class PaymentService {
         payment.setStatus(gatewayResult);
 
         Payment savedPayment = paymentRepository.save(payment);
+
+        if (savedPayment.getStatus() == PaymentStatusEnum.SUCCESS) {
+            // Auto-generate invoice for this successful payment
+            invoiceService.generateInvoice(savedPayment);
+
+            // Lookup provider's user account to send notification
+            providerRepository.findById(booking.getProviderId()).ifPresent(provider -> {
+                notificationService.notify(
+                        provider.getUserId(),
+                        NotificationTypeEnum.PAYMENT_CONFIRMED,
+                        "Payment of ₹" + amount + " confirmed for booking " + booking.getId() + ". Your payout: ₹" + providerPayout
+                );
+            });
+        }
+
         return new PaymentResponse(savedPayment);
     }
 

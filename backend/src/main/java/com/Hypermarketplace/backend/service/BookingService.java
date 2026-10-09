@@ -6,6 +6,7 @@ import com.Hypermarketplace.backend.exception.ConflictException;
 import com.Hypermarketplace.backend.exception.ResourceNotFoundException;
 import com.Hypermarketplace.backend.model.Booking;
 import com.Hypermarketplace.backend.model.BookingStatusEnum;
+import com.Hypermarketplace.backend.model.NotificationTypeEnum;
 import com.Hypermarketplace.backend.model.Provider;
 import com.Hypermarketplace.backend.model.Schedule;
 import com.Hypermarketplace.backend.model.Service;
@@ -30,15 +31,17 @@ public class BookingService {
     private final ProviderRepository providerRepository;
     private final ScheduleRepository scheduleRepository;
     private final AddressRepository addressRepository;
+    private final NotificationService notificationService;
 
     public BookingService(BookingRepository bookingRepository, ServiceRepository serviceRepository,
                          ProviderRepository providerRepository, ScheduleRepository scheduleRepository,
-                         AddressRepository addressRepository) {
+                         AddressRepository addressRepository, NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
         this.serviceRepository = serviceRepository;
         this.providerRepository = providerRepository;
         this.scheduleRepository = scheduleRepository;
         this.addressRepository = addressRepository;
+        this.notificationService = notificationService;
     }
 
     public BookingResponse createBooking(String userId, BookingRequest request) {
@@ -69,6 +72,14 @@ public class BookingService {
         booking.setStatus(BookingStatusEnum.PENDING);
 
         Booking savedBooking = bookingRepository.save(booking);
+
+        // Notify provider about the new booking
+        notificationService.notify(
+                provider.getUserId(),
+                NotificationTypeEnum.BOOKING_CREATED,
+                "New booking request received for " + service.getTitle()
+        );
+
         return new BookingResponse(savedBooking);
     }
 
@@ -103,6 +114,14 @@ public class BookingService {
 
         booking.setStatus(BookingStatusEnum.ACCEPTED);
         Booking updatedBooking = bookingRepository.save(booking);
+
+        // Notify customer that booking was accepted
+        notificationService.notify(
+                booking.getCustomerId(),
+                NotificationTypeEnum.BOOKING_ACCEPTED,
+                "Your booking has been accepted by the provider."
+        );
+
         return new BookingResponse(updatedBooking);
     }
 
@@ -119,6 +138,14 @@ public class BookingService {
 
         booking.setStatus(BookingStatusEnum.REJECTED);
         Booking updatedBooking = bookingRepository.save(booking);
+
+        // Notify customer that booking was rejected
+        notificationService.notify(
+                booking.getCustomerId(),
+                NotificationTypeEnum.BOOKING_REJECTED,
+                "Your booking has been rejected by the provider."
+        );
+
         return new BookingResponse(updatedBooking);
     }
 
@@ -137,6 +164,14 @@ public class BookingService {
 
         booking.setStatus(BookingStatusEnum.COMPLETED);
         Booking updatedBooking = bookingRepository.save(booking);
+
+        // Notify customer that service is completed
+        notificationService.notify(
+                booking.getCustomerId(),
+                NotificationTypeEnum.SERVICE_COMPLETED,
+                "Your service has been marked as completed. Please proceed with payment."
+        );
+
         return new BookingResponse(updatedBooking);
     }
 

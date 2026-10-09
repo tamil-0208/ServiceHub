@@ -2,10 +2,12 @@ package com.Hypermarketplace.backend.controller;
 
 import com.Hypermarketplace.backend.dto.ProviderRequest;
 import com.Hypermarketplace.backend.dto.ProviderResponse;
+import com.Hypermarketplace.backend.dto.RatingSummaryResponse;
 import com.Hypermarketplace.backend.dto.ScheduleRequest;
 import com.Hypermarketplace.backend.dto.ScheduleResponse;
 import com.Hypermarketplace.backend.dto.ServiceResponse;
 import com.Hypermarketplace.backend.service.ProviderService;
+import com.Hypermarketplace.backend.service.ReviewService;
 import com.Hypermarketplace.backend.service.ScheduleService;
 import com.Hypermarketplace.backend.service.ServiceService;
 import jakarta.validation.Valid;
@@ -24,11 +26,16 @@ public class ProviderController {
     private final ProviderService providerService;
     private final ServiceService serviceService;
     private final ScheduleService scheduleService;
+    private final ReviewService reviewService;
 
-    public ProviderController(ProviderService providerService, ServiceService serviceService, ScheduleService scheduleService) {
+    public ProviderController(ProviderService providerService,
+                              ServiceService serviceService,
+                              ScheduleService scheduleService,
+                              ReviewService reviewService) {
         this.providerService = providerService;
         this.serviceService = serviceService;
         this.scheduleService = scheduleService;
+        this.reviewService = reviewService;
     }
 
     @PostMapping
@@ -102,5 +109,11 @@ public class ProviderController {
         String userId = authentication.getName();
         scheduleService.deleteSchedule(userId, id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{providerId}/rating-summary")
+    public ResponseEntity<RatingSummaryResponse> getProviderRatingSummary(@PathVariable String providerId) {
+        RatingSummaryResponse response = reviewService.getRatingSummary(providerId);
+        return ResponseEntity.ok(response);
     }
 }
