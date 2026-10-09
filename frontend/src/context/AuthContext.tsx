@@ -3,6 +3,7 @@ import type { User } from '../types';
 import { TOKEN_STORAGE_KEY, USER_STORAGE_KEY } from '../api/client';
 
 interface AuthContextType {
+  currentUser: User | null;
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -52,6 +53,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const value: AuthContextType = {
+    currentUser: user,
     user,
     token,
     isAuthenticated: !!token && !!user,
