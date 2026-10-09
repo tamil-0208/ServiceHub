@@ -35,7 +35,7 @@ public class JwtService {
                 .issuedAt(new Date())
                 .expiration(
                         new Date(System.currentTimeMillis()
-                                + expirationTime)
+                                + jwtConfig.getExpirationMs())
                 )
                 .signWith(key)
                 .compact();
