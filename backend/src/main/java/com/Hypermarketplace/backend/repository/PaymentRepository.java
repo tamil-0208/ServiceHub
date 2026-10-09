@@ -18,4 +18,6 @@ public interface PaymentRepository extends MongoRepository<Payment, String> {
     Optional<Payment> findByIdAndCustomerId(String id, String customerId);
 
     Optional<Payment> findByIdAndProviderId(String id, String providerId);
+
+    org.springframework.data.domain.Page<Payment> findByStatus(PaymentStatusEnum status, org.springframework.data.domain.Pageable pageable);
 }

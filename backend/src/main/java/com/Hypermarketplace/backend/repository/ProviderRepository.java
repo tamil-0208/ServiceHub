@@ -10,4 +10,6 @@ public interface ProviderRepository extends MongoRepository<Provider, String> {
     Optional<Provider> findByUserId(String userId);
 
     boolean existsByUserId(String userId);
+
+    long countByVerified(boolean verified);
 }

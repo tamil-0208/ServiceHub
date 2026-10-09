@@ -23,6 +23,8 @@ public class Provider {
 
     private boolean verified;
 
+    private String rejectionReason;
+
     public String getId() {
         return id;
     }
@@ -85,5 +87,13 @@ public class Provider {
 
     public void setVerified(boolean verified) {
         this.verified = verified;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 }

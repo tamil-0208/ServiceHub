@@ -18,4 +18,8 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     Optional<Booking> findByIdAndCustomerId(String id, String customerId);
 
     Optional<Booking> findByIdAndProviderId(String id, String providerId);
+
+    org.springframework.data.domain.Page<Booking> findByStatus(BookingStatusEnum status, org.springframework.data.domain.Pageable pageable);
+
+    long countByStatus(BookingStatusEnum status);
 }

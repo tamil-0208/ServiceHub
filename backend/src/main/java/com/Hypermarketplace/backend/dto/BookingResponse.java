@@ -21,6 +21,9 @@ public class BookingResponse {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_TIME;
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
+    public BookingResponse() {
+    }
+
     public BookingResponse(Booking booking) {
         this.id = booking.getId();
         this.customerId = booking.getCustomerId();

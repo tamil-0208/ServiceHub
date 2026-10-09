@@ -12,6 +12,7 @@ public class ProviderResponse {
     private String experience;
     private String address;
     private boolean verified;
+    private String rejectionReason;
 
     public ProviderResponse(Provider provider) {
         this.id = provider.getId();
@@ -22,6 +23,7 @@ public class ProviderResponse {
         this.experience = provider.getExperience();
         this.address = provider.getAddress();
         this.verified = provider.isVerified();
+        this.rejectionReason = provider.getRejectionReason();
     }
 
     public String getId() {
@@ -54,5 +56,9 @@ public class ProviderResponse {
 
     public boolean isVerified() {
         return verified;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
     }
 }

@@ -45,9 +45,7 @@ public class InvoiceService {
 
         String serviceTitle = "Service";
         Optional<Booking> bookingOpt = bookingRepository.findById(payment.getBookingId());
-        if (bookingOpt.isPresent()) {
-            serviceRepository.findById(bookingOpt.get().getServiceId())
-                    .ifPresent(service -> {});
+        if (bookingOpt.isPresent() && bookingOpt.get().getServiceId() != null) {
             serviceTitle = serviceRepository.findById(bookingOpt.get().getServiceId())
                     .map(com.Hypermarketplace.backend.model.Service::getTitle)
                     .orElse("Service");

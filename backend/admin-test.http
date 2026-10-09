@@ -1,0 +1,149 @@
+### Admin Module Manual Test
+### Usage: Copy these curl commands to your terminal or run via a REST client
+### Make sure the backend is running on http://localhost:8080
+
+# ============================================
+# 1. SETUP: Tokens for Admin, Provider, and Customer
+# ============================================
+
+# 1.1 Register & Login Admin
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Super Admin",
+    "email": "master_admin@test.com",
+    "password": "Password123",
+    "role": "ADMIN"
+  }'
+
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "master_admin@test.com",
+    "password": "Password123"
+  }'
+
+# 1.2 Register & Login Customer
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Regular Customer",
+    "email": "reg_customer@test.com",
+    "password": "Password123",
+    "role": "CUSTOMER"
+  }'
+
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "reg_customer@test.com",
+    "password": "Password123"
+  }'
+
+# 1.3 Register & Login Provider
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test Painter",
+    "email": "test_painter@test.com",
+    "password": "Password123",
+    "role": "PROVIDER"
+  }'
+
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test_painter@test.com",
+    "password": "Password123"
+  }'
+
+curl -X POST http://localhost:8080/api/providers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_PROVIDER_TOKEN" \
+  -d '{
+    "businessName": "Bright Paints",
+    "description": "Interior and exterior wall painting",
+    "phone": "9876543214",
+    "experience": 3,
+    "address": "88 Color Road"
+  }'
+
+# ============================================
+# 2. NON-ADMIN ACCESS VERIFICATION (EXPECT 403 FORBIDDEN ON ALL)
+# ============================================
+
+# 2.1 Customer tries GET /api/admin/users -> Expect 403 Forbidden
+curl -X GET "http://localhost:8080/api/admin/users" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.2 Customer tries PUT /api/admin/providers/{id}/verify -> Expect 403 Forbidden
+curl -X PUT "http://localhost:8080/api/admin/providers/YOUR_PROVIDER_ID/verify" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.3 Provider tries PUT /api/admin/providers/{id}/reject -> Expect 403 Forbidden
+curl -X PUT "http://localhost:8080/api/admin/providers/YOUR_PROVIDER_ID/reject" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_PROVIDER_TOKEN" \
+  -d '{
+    "reason": "Invalid documents"
+  }'
+
+# 2.4 Customer tries GET /api/admin/bookings -> Expect 403 Forbidden
+curl -X GET "http://localhost:8080/api/admin/bookings" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.5 Customer tries GET /api/admin/payments -> Expect 403 Forbidden
+curl -X GET "http://localhost:8080/api/admin/payments" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.6 Customer tries GET /api/admin/reviews -> Expect 403 Forbidden
+curl -X GET "http://localhost:8080/api/admin/reviews" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.7 Customer tries DELETE /api/admin/reviews/{id} -> Expect 403 Forbidden
+curl -X DELETE "http://localhost:8080/api/admin/reviews/ANY_REVIEW_ID" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# 2.8 Customer tries GET /api/admin/analytics/summary -> Expect 403 Forbidden
+curl -X GET "http://localhost:8080/api/admin/analytics/summary" \
+  -H "Authorization: Bearer YOUR_CUSTOMER_TOKEN"
+
+# ============================================
+# 3. ADMIN POSITIVE TESTS
+# ============================================
+
+# 3.1 List all users (paginated) -> Expect 200 OK
+curl -X GET "http://localhost:8080/api/admin/users?page=0&size=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.2 Verify provider -> Expect 200 OK with verified: true
+curl -X PUT "http://localhost:8080/api/admin/providers/YOUR_PROVIDER_ID/verify" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.3 Reject provider with reason -> Expect 200 OK with verified: false & rejectionReason
+curl -X PUT "http://localhost:8080/api/admin/providers/YOUR_PROVIDER_ID/reject" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN" \
+  -d '{
+    "reason": "Business license was blurred and invalid."
+  }'
+
+# 3.4 List bookings (with optional status filter) -> Expect 200 OK
+curl -X GET "http://localhost:8080/api/admin/bookings?status=PENDING&page=0&size=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.5 List payments (with optional status filter) -> Expect 200 OK
+curl -X GET "http://localhost:8080/api/admin/payments?status=SUCCESS&page=0&size=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.6 List all reviews (paginated) -> Expect 200 OK
+curl -X GET "http://localhost:8080/api/admin/reviews?page=0&size=10" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.7 Moderate/delete a review -> Expect 204 No Content
+curl -X DELETE "http://localhost:8080/api/admin/reviews/YOUR_REVIEW_ID" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"
+
+# 3.8 Platform analytics summary -> Expect 200 OK with user counts, verified/unverified providers, bookings by status, total revenue
+curl -X GET "http://localhost:8080/api/admin/analytics/summary" \
+  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"

@@ -13,6 +13,9 @@ public class ServiceResponse {
     private Integer durationMinutes;
     private boolean active;
 
+    public ServiceResponse() {
+    }
+
     public ServiceResponse(Service service) {
         this.id = service.getId();
         this.providerId = service.getProviderId();
