@@ -1,0 +1,512 @@
+### Booking Module Manual Test
+### Usage: Copy these curl commands to your terminal, or use a REST client like Postman/Insomnia
+### Make sure the backend is running on http://localhost:8080
+
+# ============================================
+# SETUP: Create all necessary entities
+# ============================================
+
+# 1. Register an admin user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Admin User",
+    "email": "admin@test.com",
+    "password": "Admin123",
+    "role": "ADMIN"
+  }'
+
+# 2. Login as admin to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@test.com",
+    "password": "Admin123"
+  }'
+
+# Save the admin token
+# Replace YOUR_ADMIN_JWT_TOKEN_HERE with the actual token
+
+# 3. Create a category (ADMIN only)
+curl -X POST http://localhost:8080/api/categories \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE" \
+  -d '{
+    "name": "Electrical",
+    "description": "Electrical services and repairs"
+  }'
+
+# Save the category ID
+# Replace CATEGORY_ID_HERE with the actual ID
+
+# 4. Register a provider user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Provider User",
+    "email": "provider@test.com",
+    "password": "Provider123",
+    "role": "PROVIDER"
+  }'
+
+# 5. Login as provider to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "provider@test.com",
+    "password": "Provider123"
+  }'
+
+# Save the provider token
+# Replace PROVIDER_JWT_TOKEN_HERE with the actual token
+
+# 6. Create provider profile
+curl -X POST http://localhost:8080/api/providers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "businessName": "Test Provider",
+    "description": "Provider for booking testing",
+    "phone": "1234567890",
+    "experience": "5 years",
+    "address": "123 Provider Street"
+  }'
+
+# Save the provider ID
+# Replace PROVIDER_ID_HERE with the actual ID
+
+# 7. Create a service for the provider
+curl -X POST http://localhost:8080/api/services \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "title": "Fan Installation",
+    "description": "Professional fan installation service",
+    "price": 500.00,
+    "durationMinutes": 60,
+    "categoryId": "CATEGORY_ID_HERE"
+  }'
+
+# Save the service ID
+# Replace SERVICE_ID_HERE with the actual ID
+
+# 8. Set up provider's schedule for testing
+# Create Monday schedule (09:00-18:00)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 9. Register a customer user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Customer User",
+    "email": "customer@test.com",
+    "password": "Customer123",
+    "role": "CUSTOMER"
+  }'
+
+# 10. Login as customer to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "customer@test.com",
+    "password": "Customer123"
+  }'
+
+# Save the customer token
+# Replace CUSTOMER_JWT_TOKEN_HERE with the actual token
+
+# ============================================
+# BOOKING MODULE TESTS
+# ============================================
+
+# 11. HAPPY PATH: Create a booking for next Monday at 10:00 (within schedule)
+# Today is 2026-09-21 (Monday), so next Monday is 2026-09-28
+# First create an address for the customer
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Home",
+    "addressLine1": "123 Home Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "isDefault": true
+  }'
+
+# Save the address ID
+# Replace ADDRESS_ID_HERE with the actual ID
+
+# Then create the booking
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# Save the booking ID
+# Replace BOOKING_ID_HERE with the actual ID
+
+# 12. Get customer's bookings (should show the created booking)
+curl -X GET http://localhost:8080/api/bookings/me \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 13. Get provider's bookings (should show the booking)
+curl -X GET http://localhost:8080/api/bookings/provider/me \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 14. HAPPY PATH: Provider accepts the booking
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_ID_HERE/accept \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 15. Check booking status (should be ACCEPTED)
+curl -X GET http://localhost:8080/api/bookings/me \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 16. HAPPY PATH: Provider completes the booking
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_ID_HERE/complete \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 17. Check booking status (should be COMPLETED)
+curl -X GET http://localhost:8080/api/bookings/me \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# ============================================
+# REJECTED BOOKING TEST
+# ============================================
+
+# 18. Create another booking for rejection test
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "14:00"
+  }'
+
+# Save the new booking ID
+# Replace BOOKING_2_ID_HERE with the actual ID
+
+# 19. Provider rejects the booking
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_2_ID_HERE/reject \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 20. Check booking status (should be REJECTED)
+curl -X GET http://localhost:8080/api/bookings/me \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# ============================================
+# INVALID STATUS TRANSITION TEST
+# ============================================
+
+# 21. Create another booking for status transition test
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "16:00"
+  }'
+
+# Save the booking ID
+# Replace BOOKING_3_ID_HERE with the actual ID
+
+# 22. Try to complete a PENDING booking (should fail with 409)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/complete \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# Error message: "Can only complete ACCEPTED bookings. Current status: PENDING"
+
+# 23. Try to reject an ACCEPTED booking (should fail with 409)
+# First accept the booking
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/accept \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# Then try to reject it
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/reject \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# Error message: "Can only reject PENDING bookings. Current status: ACCEPTED"
+
+# ============================================
+# SCHEDULE VALIDATION TEST
+# ============================================
+
+# 24. Try to create booking outside provider's schedule (should fail with 409)
+# Provider schedule is 09:00-18:00 on Monday
+# Try to book at 20:00 (outside schedule)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "20:00"
+  }'
+
+# Error message: "Booking time 20:00 is outside provider's available hours (09:00 - 18:00) on MONDAY"
+
+# 25. Try to create booking before provider's schedule (should fail with 409)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "08:00"
+  }'
+
+# Error message: "Booking time 08:00 is outside provider's available hours (09:00 - 18:00) on MONDAY"
+
+# 26. Try to create booking on a day when provider is not available
+# First, create a schedule for Tuesday but mark it as unavailable
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "TUESDAY",
+    "startTime": "09:00",
+    "endTime": "18:00",
+    "available": false
+  }'
+
+# Try to book on Tuesday (2026-09-22)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-22",
+    "bookingTime": "10:00"
+  }'
+
+# Error message: "Provider is not available on TUESDAY"
+
+# ============================================
+# CANCELLATION TESTS
+# ============================================
+
+# 27. Create a booking for cancellation test
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "11:00"
+  }'
+
+# Save the booking ID
+# Replace BOOKING_4_ID_HERE with the actual ID
+
+# 28. Cancel a PENDING booking (should succeed)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_4_ID_HERE/cancel \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 29. Create and accept a booking, then cancel it
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "12:00"
+  }'
+
+# Save the booking ID
+# Replace BOOKING_5_ID_HERE with the actual ID
+
+# Accept it
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_5_ID_HERE/accept \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# Cancel the ACCEPTED booking (should succeed)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_5_ID_HERE/cancel \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 30. Try to cancel a COMPLETED booking (should fail with 409)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_ID_HERE/cancel \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# Error message: "Can only cancel PENDING or ACCEPTED bookings. Current status: COMPLETED"
+
+# ============================================
+# VALIDATION TESTS
+# ============================================
+
+# 31. Try to create booking with non-existent service (should fail with 404)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "507f1f77bcf86cd799439011",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# 31b. Try to create booking with non-existent address (should fail with 404)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "507f1f77bcf86cd799439011",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# 32. Try to create booking without serviceId (should fail with 400)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# 32b. Try to create booking without addressId (should fail with 400)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# 33. Try to create booking without bookingDate (should fail with 400)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingTime": "10:00"
+  }'
+
+# 34. Try to create booking without bookingTime (should fail with 400)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28"
+  }'
+
+# ============================================
+# AUTHORIZATION TESTS
+# ============================================
+
+# 35. Try to create booking without authentication (should fail with 401)
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "10:00"
+  }'
+
+# 36. Try to accept booking as customer (should fail with 403)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/accept \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 37. Try to cancel booking as provider (should fail with 404 - wrong ownership)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/cancel \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 38. Try to get customer bookings as provider (should succeed but show different/empty list)
+curl -X GET http://localhost:8080/api/bookings/me \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 39. Try to get provider bookings as customer (should fail with 403)
+curl -X GET http://localhost:8080/api/bookings/provider/me \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# ============================================
+# PRICE CAPTURE TEST
+# ============================================
+
+# 40. Create a booking and verify price is captured from service
+curl -X POST http://localhost:8080/api/bookings \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE" \
+  -d '{
+    "serviceId": "SERVICE_ID_HERE",
+    "addressId": "ADDRESS_ID_HERE",
+    "bookingDate": "2026-09-28",
+    "bookingTime": "13:00"
+  }'
+
+# Verify the response shows price = 500.00 (captured from service at booking time)
+
+# ============================================
+# EDGE CASES
+# ============================================
+
+# 41. Try to accept non-existent booking (should fail with 404)
+curl -X PUT http://localhost:8080/api/bookings/507f1f77bcf86cd799439011/accept \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 42. Try to reject non-existent booking (should fail with 404)
+curl -X PUT http://localhost:8080/api/bookings/507f1f77bcf86cd799439011/reject \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 43. Try to complete non-existent booking (should fail with 404)
+curl -X PUT http://localhost:8080/api/bookings/507f1f77bcf86cd799439011/complete \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 44. Try to cancel non-existent booking (should fail with 404)
+curl -X PUT http://localhost:8080/api/bookings/507f1f77bcf86cd799439011/cancel \
+  -H "Authorization: Bearer CUSTOMER_JWT_TOKEN_HERE"
+
+# 45. Try to accept another provider's booking (should fail with 404)
+# Register another provider and create a service
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Provider 2",
+    "email": "provider2@test.com",
+    "password": "Provider123",
+    "role": "PROVIDER"
+  }'
+
+# Login as provider 2
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "provider2@test.com",
+    "password": "Provider123"
+  }'
+
+# Save provider 2 token
+# Replace PROVIDER_2_JWT_TOKEN_HERE with the actual token
+
+# Try to accept the original booking (should fail)
+curl -X PUT http://localhost:8080/api/bookings/BOOKING_3_ID_HERE/accept \
+  -H "Authorization: Bearer PROVIDER_2_JWT_TOKEN_HERE"
+
+# Error message: "Booking not found or you don't have permission to accept it"

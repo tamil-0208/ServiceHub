@@ -1,0 +1,421 @@
+### Address Module Manual Test
+### Usage: Copy these curl commands to your terminal, or use a REST client like Postman/Insomnia
+### Make sure the backend is running on http://localhost:8080
+
+# ============================================
+# SETUP: Create a user
+# ============================================
+
+# 1. Register a user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Address Test User",
+    "email": "addresstest@test.com",
+    "password": "Address123",
+    "role": "CUSTOMER"
+  }'
+
+# 2. Login to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "addresstest@test.com",
+    "password": "Address123"
+  }'
+
+# Save the token from the response above
+# Replace YOUR_JWT_TOKEN_HERE with the actual token
+
+# ============================================
+# ADDRESS MODULE TESTS
+# ============================================
+
+# 3. Create first address (Home) - NOT marked as default
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Home",
+    "addressLine1": "123 Home Street",
+    "addressLine2": "Apartment 4B",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "isDefault": false
+  }'
+
+# Save the address ID
+# Replace ADDRESS_1_ID_HERE with the actual ID
+
+# 4. Create second address (Work) - NOT marked as default
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Work",
+    "addressLine1": "456 Work Avenue",
+    "addressLine2": "Floor 3",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400005",
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "isDefault": false
+  }'
+
+# Save the address ID
+# Replace ADDRESS_2_ID_HERE with the actual ID
+
+# 5. Get all addresses (should show both addresses, neither as default)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 6. DEFAULT TEST: Set first address as default
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE/default \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 7. Get all addresses (should show first address as default, second as not default)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 8. DEFAULT TEST: Set second address as default (should unset first address's default status)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE/default \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 9. Get all addresses (should show second address as default, first as not default)
+# This confirms only ONE address can be marked default per user at a time
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 10. Create third address (Office) - MARKED as default during creation
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Office",
+    "addressLine1": "789 Office Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400010",
+    "isDefault": true
+  }'
+
+# Save the address ID
+# Replace ADDRESS_3_ID_HERE with the actual ID
+
+# 11. Get all addresses (should show third address as default, others as not default)
+# This confirms default logic works during creation too
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 12. Update first address - change details but keep default status
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Home (Updated)",
+    "addressLine1": "123 Home Street (Updated)",
+    "addressLine2": "Apartment 4B",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
+    "latitude": 19.0760,
+    "longitude": 72.8777,
+    "isDefault": false
+  }'
+
+# 13. Get updated address
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 14. Update second address and set it as default (should unset third address's default)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Work (Updated)",
+    "addressLine1": "456 Work Avenue (Updated)",
+    "addressLine2": "Floor 3",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400005",
+    "isDefault": true
+  }'
+
+# 15. Get all addresses (should show second address as default, others as not default)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 16. Update third address to remove default status
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_3_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Office",
+    "addressLine1": "789 Office Road",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400010",
+    "isDefault": false
+  }'
+
+# 17. Get all addresses (should show second address still as default, third as not default)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 18. Delete first address
+curl -X DELETE http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 19. Get all addresses (should show only second and third addresses)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 20. Try to delete already-deleted address (should fail with 404)
+curl -X DELETE http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# 21. Try to update non-existent address (should fail with 404)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "This should fail",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 22. Try to set default on non-existent address (should fail with 404)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_1_ID_HERE/default \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+
+# ============================================
+# VALIDATION TESTS
+# ============================================
+
+# 23. Try to create address without label (should fail with 400)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 24. Try to create address without addressLine1 (should fail with 400)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Test",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 25. Try to create address without city (should fail with 400)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Test",
+    "addressLine1": "123 Test Street",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 26. Try to create address without state (should fail with 400)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Test",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "pincode": "400001"
+  }'
+
+# 27. Try to create address without pincode (should fail with 400)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Test",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra"
+  }'
+
+# 28. Create address with minimal required fields (should succeed)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Minimal Address",
+    "addressLine1": "999 Minimal Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400020"
+  }'
+
+# 29. Create address with optional fields omitted (should succeed)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Optional Fields Test",
+    "addressLine1": "888 Optional Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400025"
+  }'
+
+# ============================================
+# AUTHORIZATION TESTS
+# ============================================
+
+# 30. Try to create address without authentication (should fail with 401)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "Unauthorized",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 31. Try to get addresses without authentication (should fail with 401)
+curl -X GET http://localhost:8080/api/addresses/me
+
+# 32. Try to update address without authentication (should fail with 401)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "Unauthorized Update",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 33. Try to delete address without authentication (should fail with 401)
+curl -X DELETE http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE
+
+# 34. Try to set default without authentication (should fail with 401)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE/default
+
+# ============================================
+# OWNERSHIP TESTS
+# ============================================
+
+# 35. Register another user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Another User",
+    "email": "another@test.com",
+    "password": "Another123",
+    "role": "CUSTOMER"
+  }'
+
+# 36. Login as another user
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "another@test.com",
+    "password": "Another123"
+  }'
+
+# Save the other user's token
+# Replace ANOTHER_JWT_TOKEN_HERE with the actual token
+
+# 37. Try to update first user's address as second user (should fail with 404)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ANOTHER_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Cross-user Update",
+    "addressLine1": "123 Test Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001"
+  }'
+
+# 38. Try to delete first user's address as second user (should fail with 404)
+curl -X DELETE http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE \
+  -H "Authorization: Bearer ANOTHER_JWT_TOKEN_HERE"
+
+# 39. Try to set default on first user's address as second user (should fail with 404)
+curl -X PUT http://localhost:8080/api/addresses/ADDRESS_2_ID_HERE/default \
+  -H "Authorization: Bearer ANOTHER_JWT_TOKEN_HERE"
+
+# 40. Get second user's addresses (should be empty list)
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer ANOTHER_JWT_TOKEN_HERE"
+
+# ============================================
+# EDGE CASES
+# ============================================
+
+# 41. Create address with coordinates (latitude/longitude)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "With Coordinates",
+    "addressLine1": "777 Coordinate Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400030",
+    "latitude": 19.0760,
+    "longitude": 72.8777
+  }'
+
+# 42. Create address without coordinates (should succeed)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Without Coordinates",
+    "addressLine1": "666 No Coordinate Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400035"
+  }'
+
+# 43. Create address with addressLine2 (should succeed)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "With Address Line 2",
+    "addressLine1": "555 Line 2 Street",
+    "addressLine2": "Building A, Wing B",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400040"
+  }'
+
+# 44. Create address without addressLine2 (should succeed)
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "label": "Without Address Line 2",
+    "addressLine1": "444 No Line 2 Street",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400045"
+  }'
+
+# 45. Get final list of all addresses
+curl -X GET http://localhost:8080/api/addresses/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"

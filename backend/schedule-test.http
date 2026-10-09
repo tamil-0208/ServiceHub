@@ -1,0 +1,319 @@
+### Schedule Module Manual Test
+### Usage: Copy these curl commands to your terminal, or use a REST client like Postman/Insomnia
+### Make sure the backend is running on http://localhost:8080
+
+# ============================================
+# SETUP: Create a provider first
+# ============================================
+
+# 1. Register a provider user
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Schedule Provider",
+    "email": "scheduleprovider@test.com",
+    "password": "Schedule123",
+    "role": "PROVIDER"
+  }'
+
+# 2. Login as provider to get JWT token
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "scheduleprovider@test.com",
+    "password": "Schedule123"
+  }'
+
+# Save the provider token from the response above
+# Replace PROVIDER_JWT_TOKEN_HERE with the actual token
+
+# 3. Create provider profile
+curl -X POST http://localhost:8080/api/providers \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "businessName": "Test Schedule Provider",
+    "description": "Provider for schedule testing",
+    "phone": "1234567890",
+    "experience": "5 years",
+    "address": "123 Schedule Street"
+  }'
+
+# Save the provider ID from the response above
+# Replace PROVIDER_ID_HERE with the actual ID
+
+# ============================================
+# SCHEDULE MODULE TESTS
+# ============================================
+
+# 4. Create Monday schedule (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# Save the schedule ID from the response above
+# Replace MONDAY_SCHEDULE_ID_HERE with the actual ID
+
+# 5. Create Tuesday schedule (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "TUESDAY",
+    "startTime": "09:00",
+    "endTime": "17:00"
+  }'
+
+# Save the Tuesday schedule ID
+# Replace TUESDAY_SCHEDULE_ID_HERE with the actual ID
+
+# 6. Create Wednesday schedule (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "WEDNESDAY",
+    "startTime": "10:00",
+    "endTime": "19:00"
+  }'
+
+# Save the Wednesday schedule ID
+# Replace WEDNESDAY_SCHEDULE_ID_HERE with the actual ID
+
+# 7. UPSERT TEST: Post Monday schedule again with different times (should UPDATE existing entry, not create duplicate)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "08:00",
+    "endTime": "20:00"
+  }'
+
+# Verify this returned the same ID as step 4 (MONDAY_SCHEDULE_ID_HERE) - this confirms upsert behavior
+
+# 8. Get provider's full schedule (PUBLIC - should succeed without authentication)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_ID_HERE/schedule
+
+# This should show 3 entries (Monday with updated times, Tuesday, Wednesday)
+
+# 9. Update Tuesday schedule (should succeed with 200)
+curl -X PUT http://localhost:8080/api/providers/me/schedule/TUESDAY_SCHEDULE_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "TUESDAY",
+    "startTime": "08:30",
+    "endTime": "16:30"
+  }'
+
+# 10. Update schedule with availability flag (should succeed with 200)
+curl -X PUT http://localhost:8080/api/providers/me/schedule/WEDNESDAY_SCHEDULE_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "WEDNESDAY",
+    "startTime": "10:00",
+    "endTime": "19:00",
+    "available": false
+  }'
+
+# 11. Get updated schedule (should reflect changes)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_ID_HERE/schedule
+
+# 12. Delete Monday schedule (should succeed with 204)
+curl -X DELETE http://localhost:8080/api/providers/me/schedule/MONDAY_SCHEDULE_ID_HERE \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 13. Get schedule again (should now show only Tuesday and Wednesday)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_ID_HERE/schedule
+
+# 14. Try to delete already-deleted schedule (should fail with 404)
+curl -X DELETE http://localhost:8080/api/providers/me/schedule/MONDAY_SCHEDULE_ID_HERE \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE"
+
+# 15. Try to update non-existent schedule (should fail with 404)
+curl -X PUT http://localhost:8080/api/providers/me/schedule/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "THURSDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 16. Create Thursday schedule (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "THURSDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 17. Try to create schedule with startTime >= endTime (should fail with 409)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "startTime": "18:00",
+    "endTime": "09:00"
+  }'
+
+# 18. Try to create schedule with same start and end time (should fail with 409)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "startTime": "09:00",
+    "endTime": "09:00"
+  }'
+
+# 19. Try to create schedule without dayOfWeek (should fail with 400)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 20. Try to create schedule without startTime (should fail with 400)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "endTime": "18:00"
+  }'
+
+# 21. Try to create schedule without endTime (should fail with 400)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "startTime": "09:00"
+  }'
+
+# 22. Try to create schedule without authentication (should fail with 401)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 23. Try to update schedule without authentication (should fail with 401)
+curl -X PUT http://localhost:8080/api/providers/me/schedule/TUESDAY_SCHEDULE_ID_HERE \
+  -H "Content-Type: application/json" \
+  -d '{
+    "dayOfWeek": "TUESDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 24. Try to delete schedule without authentication (should fail with 401)
+curl -X DELETE http://localhost:8080/api/providers/me/schedule/TUESDAY_SCHEDULE_ID_HERE
+
+# 25. Create Friday schedule with minimal valid data (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "FRIDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 26. Create Saturday schedule with availability flag (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "SATURDAY",
+    "startTime": "10:00",
+    "endTime": "14:00",
+    "available": false
+  }'
+
+# 27. Create Sunday schedule (should succeed with 200)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "SUNDAY",
+    "startTime": "00:00",
+    "endTime": "23:59"
+  }'
+
+# 28. Get complete weekly schedule (should show all 7 days)
+curl -X GET http://localhost:8080/api/providers/PROVIDER_ID_HERE/schedule
+
+# 29. Try to update schedule to duplicate another day (should fail with 409)
+# Try to change Tuesday to Monday (Monday already exists)
+curl -X PUT http://localhost:8080/api/providers/me/schedule/TUESDAY_SCHEDULE_ID_HERE \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 30. Get schedule for non-existent provider (should return empty list)
+curl -X GET http://localhost:8080/api/providers/507f1f77bcf86cd799439011/schedule
+
+# 31. Try to create schedule without provider profile (should fail with 404)
+# First register a user without provider profile
+curl -X POST http://localhost:8080/api/users/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "No Profile Schedule User",
+    "email": "noschedulesprofile@test.com",
+    "password": "NoProfile123",
+    "role": "PROVIDER"
+  }'
+
+# Login as no-profile user
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "noschedulesprofile@test.com",
+    "password": "NoProfile123"
+  }'
+
+# Replace NO_PROFILE_JWT_TOKEN_HERE with the actual token
+# Try to create schedule (should fail with 404)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer NO_PROFILE_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "09:00",
+    "endTime": "18:00"
+  }'
+
+# 32. Create schedule with different time formats (24-hour format should work)
+curl -X POST http://localhost:8080/api/providers/me/schedule \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer PROVIDER_JWT_TOKEN_HERE" \
+  -d '{
+    "dayOfWeek": "MONDAY",
+    "startTime": "23:30",
+    "endTime": "23:59"
+  }'
+
+# This should update the existing Monday entry (upsert behavior)
+
+# 33. Get final schedule to verify all changes
+curl -X GET http://localhost:8080/api/providers/PROVIDER_ID_HERE/schedule
