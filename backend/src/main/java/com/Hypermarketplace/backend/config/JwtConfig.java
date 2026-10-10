@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JwtConfig {
 
-    @Value("${jwt.secret:ServiceHubSecretKeyForDevelopmentOnly123456789}")
+    @Value("${jwt.secret:7gxHV1Ixa8gh8VrWTlBwJfRnDUPEkbqo8OaMrEbN0Mk=}")
     private String secretKey;
 
     @Value("${jwt.expiration-ms:3600000}")
