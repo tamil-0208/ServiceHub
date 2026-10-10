@@ -1,32 +1,76 @@
-# React + TypeScript + Vite
+# Hypermarketplace Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Modern React 19 + TypeScript frontend application for Hypermarketplace, built with Vite, Axios, and React Router.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Environment Configuration
 
-## React Compiler
+The application is completely decoupled from the Spring Boot backend and requires only a single environment variable to configure the target backend:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Variable | Description | Local / Development | Production |
+| :--- | :--- | :--- | :--- |
+| `VITE_API_BASE_URL` | Base URL of the Hypermarketplace Spring Boot backend | `http://localhost:8080` | `https://api.yourdomain.com` (or your cloud container URL) |
 
-## Expanding the Oxlint configuration
+### Setting Up Environment Variables
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+1. For local development, create or edit `.env` in the `frontend` root:
+   ```env
+   VITE_API_BASE_URL=http://localhost:8080
+   ```
+2. For production deployments (Vercel, Netlify, Cloudflare Pages, Docker), configure `VITE_API_BASE_URL` in the platform's Environment Variables settings panel before initiating the build.
+3. Vite bakes variables prefixed with `VITE_` into the static JavaScript bundle at compile time.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+---
+
+## 🛠️ Development & Build Commands
+
+All commands should be executed from the `frontend/` directory:
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server (http://localhost:5173)
+npm run dev
+
+# Run TypeScript type check and compile production bundle
+npm run build
+
+# Preview the production build locally
+npm run preview
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 📦 Project Structure
+
+```
+frontend/
+├── src/
+│   ├── api/             # Centralized Axios client & API endpoints
+│   ├── components/      # Reusable UI components
+│   │   ├── admin/       # Admin-specific layout and components
+│   │   ├── bookings/    # Booking modal & table rows
+│   │   ├── common/      # ErrorBoundary, ProtectedRoute, Pagination, Loading
+│   │   ├── layout/      # Navbar, Layout, Footer
+│   │   ├── notifications/# In-app notification bell & dropdown
+│   │   ├── providers/   # Provider cards & profiles
+│   │   ├── reviews/     # Review modals & lists
+│   │   └── services/    # Service listing cards
+│   ├── context/         # AuthContext & ToastContext
+│   ├── pages/           # Customer, Provider, and Admin route pages
+│   └── types/           # Complete TypeScript DTO interfaces matching backend
+├── dist/                # Production distribution build (generated via npm run build)
+├── .env                 # Local environment configuration
+└── DEPLOYMENT.md        # Production deployment documentation
+```
+
+---
+
+## 🔒 Authentication & Role Security
+
+- JWT tokens are automatically stored in `localStorage` upon login.
+- Axios request interceptor attaches `Authorization: Bearer <token>` to all protected calls.
+- Axios response interceptor redirects to `/login` upon `401 Unauthorized`.
+- Client-side routes are guarded by `<ProtectedRoute allowedRoles={[...]}>` for `CUSTOMER`, `PROVIDER`, and `ADMIN` roles.

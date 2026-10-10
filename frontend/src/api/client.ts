@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Handle 401 Unauthorized globally
+// Response Interceptor: Handle errors globally
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorResponse>) => {
@@ -45,6 +45,17 @@ apiClient.interceptors.response.use(
       ) {
         window.location.href = '/login';
       }
+    } else if (typeof window !== 'undefined' && error.response && error.response.status >= 500) {
+      // Dispatch custom event for 5xx server errors
+      const serverMessage = error.response.data?.message || 'Server error occurred. Please try again later.';
+      window.dispatchEvent(new CustomEvent('servicehub:api-error', { detail: { message: serverMessage } }));
+    } else if (typeof window !== 'undefined' && !error.response) {
+      // Network or offline error
+      window.dispatchEvent(
+        new CustomEvent('servicehub:api-error', {
+          detail: { message: 'Network connection error. Please verify backend connectivity.' },
+        })
+      );
     }
     return Promise.reject(error);
   }

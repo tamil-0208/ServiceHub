@@ -128,7 +128,7 @@ export const ProviderDashboardPage: React.FC = () => {
       {provider && (
         <div className="card" style={{ padding: '1.5rem', marginTop: '2rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>Profile Details</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
             {provider.description && (
               <div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>Description</div>

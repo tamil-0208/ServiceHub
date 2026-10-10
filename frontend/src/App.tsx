@@ -16,15 +16,22 @@ import { NotFoundPage } from './pages/NotFoundPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { BookingsPage } from './pages/BookingsPage';
 
-// Admin pages
-import { AdminPage } from './pages/AdminPage';
-
 // Provider pages
 import { BecomeProviderPage } from './pages/provider/BecomeProviderPage';
 import { ProviderDashboardPage } from './pages/provider/ProviderDashboardPage';
 import { ManageServicesPage } from './pages/provider/ManageServicesPage';
 import { ManageSchedulePage } from './pages/provider/ManageSchedulePage';
 import { ProviderBookingsPage } from './pages/provider/ProviderBookingsPage';
+
+// Admin shell + pages
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminOverviewPage } from './pages/admin/AdminOverviewPage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminProvidersPage } from './pages/admin/AdminProvidersPage';
+import { AdminBookingsPage } from './pages/admin/AdminBookingsPage';
+import { AdminPaymentsPage } from './pages/admin/AdminPaymentsPage';
+import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 
 export const App: React.FC = () => {
   return (
@@ -57,18 +64,7 @@ export const App: React.FC = () => {
               }
             />
 
-            {/* ── Admin Protected Routes ────────────────────────── */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <AdminPage />
-                </ProtectedRoute>
-              }
-            />
-
             {/* ── Provider Protected Routes ─────────────────────── */}
-            {/* /provider/become — any authenticated user can reach this to create a profile */}
             <Route
               path="/provider/become"
               element={
@@ -109,6 +105,25 @@ export const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+
+            {/* ── Admin Routes (nested under AdminLayout) ───────── */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              {/* index = /admin */}
+              <Route index element={<AdminOverviewPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="providers" element={<AdminProvidersPage />} />
+              <Route path="bookings" element={<AdminBookingsPage />} />
+              <Route path="payments" element={<AdminPaymentsPage />} />
+              <Route path="reviews" element={<AdminReviewsPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+            </Route>
 
             {/* ── 404 ───────────────────────────────────────────── */}
             <Route path="*" element={<NotFoundPage />} />

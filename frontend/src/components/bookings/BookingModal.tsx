@@ -191,7 +191,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         ) : (
           <form onSubmit={handleBookingSubmit}>
             {/* Date & Time Selectors */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label" htmlFor="booking-date">
                   Select Date *

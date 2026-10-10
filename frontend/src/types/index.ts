@@ -252,3 +252,21 @@ export interface ApiErrorResponse {
   message: string;
   timestamp: string;
 }
+
+// Admin DTOs
+export interface AdminAnalyticsSummary {
+  totalUsers: number;
+  totalProviders: number;
+  verifiedProviders: number;
+  unverifiedProviders: number;
+  bookingsByStatus: Record<string, number>;
+  totalRevenue: number;
+}
+
+// UserResponse (admin list uses this shape)
+export interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+}
