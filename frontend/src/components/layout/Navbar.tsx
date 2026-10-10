@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationBell } from '../notifications/NotificationBell';
 
 export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -10,6 +11,9 @@ export const Navbar: React.FC = () => {
     logout();
     navigate('/login');
   };
+
+  const isProvider = user?.role === 'PROVIDER';
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <nav className="navbar">
@@ -23,9 +27,7 @@ export const Navbar: React.FC = () => {
           <li>
             <NavLink
               to="/"
-              className={({ isActive }) =>
-                isActive ? 'nav-link active' : 'nav-link'
-              }
+              className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             >
               Home
             </NavLink>
@@ -33,42 +35,69 @@ export const Navbar: React.FC = () => {
           <li>
             <NavLink
               to="/providers"
-              className={({ isActive }) =>
-                isActive ? 'nav-link active' : 'nav-link'
-              }
+              className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
             >
               Providers
             </NavLink>
           </li>
-          <li>
-            <NavLink
-              to="/bookings"
-              className={({ isActive }) =>
-                isActive ? 'nav-link active' : 'nav-link'
-              }
-            >
-              Bookings
-            </NavLink>
-          </li>
-          {isAuthenticated && (
+
+          {/* Customer-facing links */}
+          {isAuthenticated && !isProvider && !isAdmin && (
             <li>
               <NavLink
-                to="/dashboard"
-                className={({ isActive }) =>
-                  isActive ? 'nav-link active' : 'nav-link'
-                }
+                to="/bookings"
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
               >
-                Dashboard
+                My Bookings
               </NavLink>
             </li>
           )}
-          {isAuthenticated && user?.role === 'ADMIN' && (
+
+          {/* Provider-facing links */}
+          {isAuthenticated && isProvider && (
+            <>
+              <li>
+                <NavLink
+                  to="/provider"
+                  end
+                  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                >
+                  Dashboard
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/provider/bookings"
+                  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                >
+                  Bookings
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/provider/services"
+                  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                >
+                  Services
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/provider/schedule"
+                  className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+                >
+                  Schedule
+                </NavLink>
+              </li>
+            </>
+          )}
+
+          {/* Admin link */}
+          {isAuthenticated && isAdmin && (
             <li>
               <NavLink
                 to="/admin"
-                className={({ isActive }) =>
-                  isActive ? 'nav-link active' : 'nav-link'
-                }
+                className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
               >
                 Admin
               </NavLink>
@@ -79,6 +108,8 @@ export const Navbar: React.FC = () => {
         <div className="nav-auth">
           {isAuthenticated && user ? (
             <>
+              {/* Notification bell for authenticated users */}
+              <NotificationBell />
               <span className="badge badge-primary">{user.role}</span>
               <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
                 {user.name}

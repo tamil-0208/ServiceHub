@@ -53,6 +53,12 @@ public class ProviderController {
                 .body(response);
     }
 
+    @GetMapping
+    public ResponseEntity<List<ProviderResponse>> getAllProviders() {
+        List<ProviderResponse> providers = providerService.getAllProviders();
+        return ResponseEntity.ok(providers);
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ProviderResponse> getMyProviderProfile(
             Authentication authentication) {
@@ -62,6 +68,12 @@ public class ProviderController {
         ProviderResponse response =
                 providerService.getProviderByUserId(userId);
 
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProviderResponse> getProviderById(@PathVariable String id) {
+        ProviderResponse response = providerService.getProviderById(id);
         return ResponseEntity.ok(response);
     }
 

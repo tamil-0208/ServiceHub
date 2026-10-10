@@ -54,12 +54,49 @@ export interface Provider {
   id: string;
   userId: string;
   businessName: string;
-  bio?: string;
+  description?: string;
+  phone?: string;
+  experience?: string;
   address?: string;
+  bio?: string;
   city?: string;
   verified: boolean;
   rejectionReason?: string;
   createdAt?: string;
+}
+
+export interface ProviderRequest {
+  businessName: string;
+  description?: string;
+  phone?: string;
+  experience?: string;
+  address?: string;
+}
+
+// Earnings DTOs
+export interface EarningsResponse {
+  providerId: string;
+  totalEarnings: number;
+  completedPaymentsCount: number;
+}
+
+// Service request DTO
+export interface ServiceRequest {
+  title: string;
+  description?: string;
+  price: number;
+  durationMinutes?: number;
+  categoryId: string;
+}
+
+// Schedule request DTO
+export type WeekDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+export interface ScheduleRequest {
+  dayOfWeek: WeekDay;
+  startTime: string; // HH:mm:ss
+  endTime: string;   // HH:mm:ss
+  available: boolean;
 }
 
 // Service Listing DTOs
@@ -74,6 +111,43 @@ export interface ServiceItem {
   active: boolean;
 }
 
+// Schedule DTOs
+export interface Schedule {
+  id: string;
+  providerId: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+  available: boolean;
+}
+
+// Address DTOs
+export interface Address {
+  id: string;
+  userId: string;
+  label: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault: boolean;
+}
+
+export interface AddressRequest {
+  label: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault?: boolean;
+}
+
 // Booking DTOs
 export type BookingStatus =
   | 'PENDING'
@@ -81,6 +155,13 @@ export type BookingStatus =
   | 'REJECTED'
   | 'COMPLETED'
   | 'CANCELLED';
+
+export interface BookingRequest {
+  serviceId: string;
+  addressId: string;
+  bookingDate: string; // YYYY-MM-DD
+  bookingTime: string; // HH:mm:ss or HH:mm
+}
 
 export interface Booking {
   id: string;
@@ -97,6 +178,12 @@ export interface Booking {
 }
 
 // Review DTOs
+export interface ReviewRequest {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}
+
 export interface Review {
   id: string;
   bookingId: string;
@@ -110,6 +197,29 @@ export interface Review {
 export interface RatingSummary {
   averageRating: number;
   totalReviews: number;
+}
+
+export interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
+// Payment DTOs
+export interface Payment {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  providerId: string;
+  amount: number;
+  platformCommission: number;
+  providerPayout: number;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  transactionId: string;
+  paymentMethod: string;
+  createdAt?: string;
 }
 
 // Notification DTOs

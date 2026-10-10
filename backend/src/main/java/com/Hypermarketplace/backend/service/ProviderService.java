@@ -51,4 +51,20 @@ public class ProviderService {
 
         return new ProviderResponse(provider);
     }
+
+    public ProviderResponse getProviderById(String id) {
+
+        Provider provider = providerRepository
+                .findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Provider not found with ID: " + id));
+
+        return new ProviderResponse(provider);
+    }
+
+    public java.util.List<ProviderResponse> getAllProviders() {
+        return providerRepository.findAll().stream()
+                .map(ProviderResponse::new)
+                .toList();
+    }
 }

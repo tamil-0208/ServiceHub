@@ -1,46 +1,107 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { apiClient } from '../api/client';
+import type { Provider } from '../types';
+import { ProviderCard } from '../components/providers/ProviderCard';
+import { LoadingSpinner } from '../components/common/LoadingSpinner';
+import { ErrorMessage } from '../components/common/ErrorMessage';
 
 export const ProvidersPage: React.FC = () => {
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [verifiedOnly, setVerifiedOnly] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProviders = () => {
+    setIsLoading(true);
+    apiClient
+      .get<Provider[]>('/api/providers')
+      .then((res) => {
+        setProviders(res.data);
+        setError(null);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch providers:', err);
+        setError('Could not load service providers.');
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  useEffect(() => {
+    fetchProviders();
+  }, []);
+
+  const filteredProviders = providers.filter((p) => {
+    const matchesSearch =
+      p.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.bio?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesVerified = !verifiedOnly || p.verified;
+
+    return matchesSearch && matchesVerified;
+  });
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Service Providers</h1>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Local Service Providers</h1>
           <p style={{ color: 'var(--text-muted)' }}>
-            Discover and connect with top-rated local service professionals.
+            Find trusted, verified home service experts and technicians in your area.
           </p>
         </div>
-      </div>
 
-      <div className="banner banner-info">
-        <span>ℹ️</span>
-        <span>Provider directory, search, and category filtering will be connected in the Providers stage.</span>
-      </div>
+        {/* Filter Controls */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <input
+            type="text"
+            className="form-input"
+            style={{ width: '240px' }}
+            placeholder="🔍 Search name or city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
 
-      <div className="grid">
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 className="card-title">Quick Fix Electricals</h3>
-            <span className="badge badge-success">Verified</span>
-          </div>
-          <p className="card-subtitle">City: Downtown | Rating: ★ 4.9 (12 reviews)</p>
-          <Link to="/providers/sample-id-1" className="btn btn-outline btn-sm">
-            View Profile & Services →
-          </Link>
-        </div>
-
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <h3 className="card-title">Pro Plumbing Care</h3>
-            <span className="badge badge-success">Verified</span>
-          </div>
-          <p className="card-subtitle">City: Westside | Rating: ★ 4.8 (8 reviews)</p>
-          <Link to="/providers/sample-id-2" className="btn btn-outline btn-sm">
-            View Profile & Services →
-          </Link>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <input
+              type="checkbox"
+              checked={verifiedOnly}
+              onChange={(e) => setVerifiedOnly(e.target.checked)}
+            />
+            Verified Only
+          </label>
         </div>
       </div>
+
+      {error && <ErrorMessage message={error} onRetry={fetchProviders} />}
+
+      {isLoading ? (
+        <LoadingSpinner message="Loading local service providers..." />
+      ) : filteredProviders.length > 0 ? (
+        <div className="grid">
+          {filteredProviders.map((provider) => (
+            <ProviderCard key={provider.id} provider={provider} />
+          ))}
+        </div>
+      ) : (
+        <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            No service providers found matching your criteria.
+          </p>
+          {(searchQuery || verifiedOnly) && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setVerifiedOnly(false);
+              }}
+              className="btn btn-outline btn-sm"
+            >
+              Reset Filters
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };
